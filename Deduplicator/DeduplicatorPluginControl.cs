@@ -71,7 +71,7 @@ namespace DynCrmExp.Deduplicator
         #region Form Event Hanlders
         private void MyPluginControl_Load(object sender, EventArgs e)
         {
-            //ShowInfoNotification("This is a notification that can lead to XrmToolBox repository", new Uri("https://github.com/MscrmTools/XrmToolBox"));            
+            ShowInfoNotification("Tip: Select only necessary fields for better performance.", null);
         }
 
         private void tsbClose_Click(object sender, EventArgs e)
