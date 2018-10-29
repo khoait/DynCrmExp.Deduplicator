@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>DynCrmExp.Deduplicator</id>
+    <version>1.2018.10.29</version>
+    <title>Deduplicator</title>
+    <authors>Khoa Nguyen</authors>
+    <owners>Khoa Nguyen</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://raw.githubusercontent.com/khoait/DynCrmExp.Deduplicator/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/khoait/DynCrmExp.Deduplicator</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/khoait/DynCrmExp.Deduplicator/master/DD_logo_64.png</iconUrl>
+    <description>Deduplicator helps you find duplicated records in Microsoft Dynamics 365 CE / CRM with ability to overcome CRM limitations.</description>
+    <summary>Deduplicator is a plugin for XrmToolbox</summary>
+    <releaseNotes>v1.2018.10.29:
+- Fixed minor bugs.
+
+v1.2018.7.21:
+- Allows matching multiple fields with no length limitation.
+- Allows searching more than 5000 records.
+- Allows selecting fields for results view.</releaseNotes>
+    <tags>XrmToolBox Deduplicator</tags>
+    <dependencies>
+      <group targetFramework=".NETFramework4.6.2">
+        <dependency id="XrmToolBoxPackage" version="1.2018.6.25" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="lib\net462\Plugins\DynCrmExp.Deduplicator.dll" target="lib\net462\Plugins\DynCrmExp.Deduplicator.dll" />
+  </files>
+</package>
