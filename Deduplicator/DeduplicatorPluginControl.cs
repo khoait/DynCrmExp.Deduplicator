@@ -45,9 +45,9 @@ namespace DynCrmExp.Deduplicator
             }
         }
 
-        public string RepositoryName => throw new NotImplementedException();
+        public string RepositoryName => "DynCrmExp.Deduplicator";
 
-        public string UserName => throw new NotImplementedException();
+        public string UserName => "khoait";
 
         private Dictionary<string, EntityMetadata> _entities;
         private Dictionary<string, AttributeMetadata> _attributes;
