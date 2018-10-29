@@ -542,15 +542,13 @@ namespace DynCrmExp.Deduplicator
 
         private void ClearResults()
         {
-            dgvFields.DataSource = null;
             dgvFields.Rows.Clear();
             dgvFields.Refresh();
 
-            dgvDuplicated.DataSource = null;
-            dgvDuplicated.Rows.Clear();
+            dgvDuplicated.Columns.Clear();
             dgvDuplicated.Refresh();
 
-            dgvDuplicates.DataSource = null;
+            dgvDuplicates.Columns.Clear();
             dgvDuplicates.Rows.Clear();
             dgvDuplicates.Refresh();
 
