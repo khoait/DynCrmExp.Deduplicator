@@ -63,9 +63,7 @@ namespace DynCrmExp.Deduplicator
             dgvFields.Columns["colDisplayName"].DataPropertyName = "DisplayName";
             dgvFields.Columns["colLogicalName"].DataPropertyName = "LogicalName";
             dgvFields.Columns["colMatch"].DataPropertyName = "IsMatch";
-            dgvFields.Columns["colView"].DataPropertyName = "IsView";
-
-            //dgvDuplicated.AutoGenerateColumns = true;
+            dgvFields.Columns["colView"].DataPropertyName = "IsView";            
         }
 
         #region Form Event Hanlders
@@ -271,14 +269,6 @@ namespace DynCrmExp.Deduplicator
                             if (entityMetadata.Count == 1)
                             {
                                 var entMetadata = entityMetadata[0];
-                                //if (_entities.ContainsKey(entity))
-                                //{
-                                //    _entities[entity] = entMetadata;
-                                //}
-                                //else
-                                //{
-                                //    _entities.Add(entity, entMetadata);
-                                //}
 
                                 _attributes = entMetadata.Attributes.ToDictionary(m => m.LogicalName);
 
@@ -289,9 +279,7 @@ namespace DynCrmExp.Deduplicator
                                     IsView = a.IsPrimaryName ?? false
                                 })
                                 .OrderBy(a => a.DisplayName)
-                                .ThenBy(a => a.LogicalName).ToList();
-
-                                //dgvFields.DataSource = attritbutes;
+                                .ThenBy(a => a.LogicalName).ToList();                                
 
                                 // use unbound grid to support column sorting
                                 foreach (var item in attritbutes)
@@ -546,7 +534,8 @@ namespace DynCrmExp.Deduplicator
             _duplicated = null;
 
             cbEntities.DataSource = null;
-            cbEntities.Items.Clear();
+            cbEntities.DisplayMember = "DisplayName";
+            cbEntities.ValueMember = "LogicalName";            
 
             ClearResults();
         }
