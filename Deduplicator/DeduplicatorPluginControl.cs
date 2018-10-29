@@ -422,7 +422,6 @@ namespace DynCrmExp.Deduplicator
             }
 
             dgvDuplicated.ClearSelection();
-            dgvDuplicates.DataSource = null;
             dgvDuplicates.Rows.Clear();
             dgvDuplicates.Refresh();
 
