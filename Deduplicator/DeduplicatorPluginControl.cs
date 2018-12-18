@@ -183,7 +183,7 @@ namespace DynCrmExp.Deduplicator
                 Message = "Loading entities...",
                 Work = (worker, args) =>
                 {
-                    args.Result = CrmHelper.GetEntitiesMetadata(Service);
+                    args.Result = CrmHelper.GetEntitiesMetadata(Service, IsBPFSupported());
                 },
                 PostWorkCallBack = (args) =>
                 {
@@ -212,6 +212,12 @@ namespace DynCrmExp.Deduplicator
                     }
                 }
             });
+        }
+
+        private bool IsBPFSupported()
+        {
+            return ConnectionDetail.OrganizationMajorVersion >= 9 ||
+                (ConnectionDetail.OrganizationMajorVersion == 8 && ConnectionDetail.OrganizationMinorVersion == 2);
         }
 
         private string GetEntityDisplayName(EntityMetadata metadata)

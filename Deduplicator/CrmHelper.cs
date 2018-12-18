@@ -68,11 +68,14 @@ namespace DynCrmExp.Deduplicator
             "ServiceAppointment"
         };
 
-        public static RetrieveMetadataChangesResponse GetEntitiesMetadata(IOrganizationService service)
+        public static RetrieveMetadataChangesResponse GetEntitiesMetadata(IOrganizationService service, bool BPFEntitySupported)
         {
             var entityFilter = new MetadataFilterExpression(Microsoft.Xrm.Sdk.Query.LogicalOperator.And);
             entityFilter.Conditions.Add(new MetadataConditionExpression("IsIntersect", MetadataConditionOperator.Equals, false));
-            entityFilter.Conditions.Add(new MetadataConditionExpression("IsBPFEntity", MetadataConditionOperator.Equals, false));
+            if (BPFEntitySupported)
+            {
+                entityFilter.Conditions.Add(new MetadataConditionExpression("IsBPFEntity", MetadataConditionOperator.Equals, false));
+            }
             entityFilter.Conditions.Add(new MetadataConditionExpression("SchemaName", MetadataConditionOperator.NotIn, excludedEntities));
 
             var entityProps = new MetadataPropertiesExpression("DisplayName", "LogicalName", "SchemaName", "ObjectTypeCode");                       
