@@ -29,10 +29,7 @@
         private void InitializeComponent()
         {
             this.toolStripMenu = new System.Windows.Forms.ToolStrip();
-            this.tsbClose = new System.Windows.Forms.ToolStripButton();
             this.tssSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.tsbLoadEntities = new System.Windows.Forms.ToolStripButton();
-            this.tsbRun = new System.Windows.Forms.ToolStripButton();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.dgvFields = new System.Windows.Forms.DataGridView();
@@ -41,6 +38,7 @@
             this.colMatch = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.colView = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.chkIgnoreBlank = new System.Windows.Forms.CheckBox();
             this.chkIgnoreWhiteSpace = new System.Windows.Forms.CheckBox();
             this.chkCaseSensitive = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -51,7 +49,10 @@
             this.dgvDuplicated = new System.Windows.Forms.DataGridView();
             this.gbDuplicates = new System.Windows.Forms.GroupBox();
             this.dgvDuplicates = new System.Windows.Forms.DataGridView();
-            this.chkIgnoreBlank = new System.Windows.Forms.CheckBox();
+            this.tsbClose = new System.Windows.Forms.ToolStripButton();
+            this.tsbLoadEntities = new System.Windows.Forms.ToolStripButton();
+            this.tsbRun = new System.Windows.Forms.ToolStripButton();
+            this.tsbExport = new System.Windows.Forms.ToolStripButton();
             this.toolStripMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -77,46 +78,18 @@
             this.tsbClose,
             this.tssSeparator1,
             this.tsbLoadEntities,
-            this.tsbRun});
+            this.tsbRun,
+            this.tsbExport});
             this.toolStripMenu.Location = new System.Drawing.Point(0, 0);
             this.toolStripMenu.Name = "toolStripMenu";
             this.toolStripMenu.Size = new System.Drawing.Size(835, 25);
             this.toolStripMenu.TabIndex = 4;
             this.toolStripMenu.Text = "toolStrip1";
             // 
-            // tsbClose
-            // 
-            this.tsbClose.Image = global::DynCrmExp.Deduplicator.Properties.Resources.ico_Close;
-            this.tsbClose.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.tsbClose.Name = "tsbClose";
-            this.tsbClose.Size = new System.Drawing.Size(56, 22);
-            this.tsbClose.Text = "Close";
-            this.tsbClose.Click += new System.EventHandler(this.tsbClose_Click);
-            // 
             // tssSeparator1
             // 
             this.tssSeparator1.Name = "tssSeparator1";
             this.tssSeparator1.Size = new System.Drawing.Size(6, 25);
-            // 
-            // tsbLoadEntities
-            // 
-            this.tsbLoadEntities.Image = global::DynCrmExp.Deduplicator.Properties.Resources.ico_16_0;
-            this.tsbLoadEntities.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.tsbLoadEntities.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbLoadEntities.Name = "tsbLoadEntities";
-            this.tsbLoadEntities.Size = new System.Drawing.Size(94, 22);
-            this.tsbLoadEntities.Text = "Load Entities";
-            this.tsbLoadEntities.Click += new System.EventHandler(this.btnLoadEntities_Click);
-            // 
-            // tsbRun
-            // 
-            this.tsbRun.Image = global::DynCrmExp.Deduplicator.Properties.Resources.DuplicateDetection_16;
-            this.tsbRun.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.tsbRun.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbRun.Name = "tsbRun";
-            this.tsbRun.Size = new System.Drawing.Size(107, 22);
-            this.tsbRun.Text = "Find duplicates";
-            this.tsbRun.Click += new System.EventHandler(this.tsbRun_Click);
             // 
             // splitContainer1
             // 
@@ -216,6 +189,18 @@
             this.groupBox4.TabIndex = 4;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Text Matching Options";
+            // 
+            // chkIgnoreBlank
+            // 
+            this.chkIgnoreBlank.AutoSize = true;
+            this.chkIgnoreBlank.Checked = true;
+            this.chkIgnoreBlank.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkIgnoreBlank.Location = new System.Drawing.Point(6, 65);
+            this.chkIgnoreBlank.Name = "chkIgnoreBlank";
+            this.chkIgnoreBlank.Size = new System.Drawing.Size(119, 17);
+            this.chkIgnoreBlank.TabIndex = 3;
+            this.chkIgnoreBlank.Text = "Ignore blank values";
+            this.chkIgnoreBlank.UseVisualStyleBackColor = true;
             // 
             // chkIgnoreWhiteSpace
             // 
@@ -348,17 +333,45 @@
             this.dgvDuplicates.TabIndex = 8;
             this.dgvDuplicates.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvDuplicates_CellClick);
             // 
-            // chkIgnoreBlank
+            // tsbClose
             // 
-            this.chkIgnoreBlank.AutoSize = true;
-            this.chkIgnoreBlank.Checked = true;
-            this.chkIgnoreBlank.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkIgnoreBlank.Location = new System.Drawing.Point(6, 65);
-            this.chkIgnoreBlank.Name = "chkIgnoreBlank";
-            this.chkIgnoreBlank.Size = new System.Drawing.Size(119, 17);
-            this.chkIgnoreBlank.TabIndex = 3;
-            this.chkIgnoreBlank.Text = "Ignore blank values";
-            this.chkIgnoreBlank.UseVisualStyleBackColor = true;
+            this.tsbClose.Image = global::DynCrmExp.Deduplicator.Properties.Resources.ico_Close;
+            this.tsbClose.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsbClose.Name = "tsbClose";
+            this.tsbClose.Size = new System.Drawing.Size(56, 22);
+            this.tsbClose.Text = "Close";
+            this.tsbClose.Click += new System.EventHandler(this.tsbClose_Click);
+            // 
+            // tsbLoadEntities
+            // 
+            this.tsbLoadEntities.Image = global::DynCrmExp.Deduplicator.Properties.Resources.ico_16_0;
+            this.tsbLoadEntities.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsbLoadEntities.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbLoadEntities.Name = "tsbLoadEntities";
+            this.tsbLoadEntities.Size = new System.Drawing.Size(94, 22);
+            this.tsbLoadEntities.Text = "Load Entities";
+            this.tsbLoadEntities.Click += new System.EventHandler(this.btnLoadEntities_Click);
+            // 
+            // tsbRun
+            // 
+            this.tsbRun.Image = global::DynCrmExp.Deduplicator.Properties.Resources.DuplicateDetection_16;
+            this.tsbRun.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsbRun.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbRun.Name = "tsbRun";
+            this.tsbRun.Size = new System.Drawing.Size(107, 22);
+            this.tsbRun.Text = "Find duplicates";
+            this.tsbRun.Click += new System.EventHandler(this.tsbRun_Click);
+            // 
+            // tsbExport
+            // 
+            this.tsbExport.Image = global::DynCrmExp.Deduplicator.Properties.Resources.ico_16_9507_Excel;
+            this.tsbExport.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsbExport.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbExport.Name = "tsbExport";
+            this.tsbExport.Size = new System.Drawing.Size(118, 22);
+            this.tsbExport.Text = "Export Duplicates";
+            this.tsbExport.ToolTipText = "Export Duplicates Data to CSV";
+            this.tsbExport.Click += new System.EventHandler(this.tsbExport_Click);
             // 
             // DeduplicatorPluginControl
             // 
@@ -418,5 +431,6 @@
         private System.Windows.Forms.ToolStripButton tsbLoadEntities;
         private System.Windows.Forms.DataGridView dgvDuplicates;
         private System.Windows.Forms.CheckBox chkIgnoreBlank;
+        private System.Windows.Forms.ToolStripButton tsbExport;
     }
 }

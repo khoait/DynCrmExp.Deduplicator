@@ -16,6 +16,9 @@ using Microsoft.Xrm.Sdk.Metadata;
 using DynCrmExp.Deduplicator.Models;
 using System.Diagnostics;
 using XrmToolBox.Extensibility.Interfaces;
+using CsvHelper;
+using System.IO;
+using CsvHelper.Configuration;
 
 namespace DynCrmExp.Deduplicator
 {
@@ -51,7 +54,7 @@ namespace DynCrmExp.Deduplicator
 
         private Dictionary<string, EntityMetadata> _entities;
         private Dictionary<string, AttributeMetadata> _attributes;
-        private ILookup<string, Entity> _duplicated;
+        private DataProcessor _dataProcessor;
         
         public DeduplicatorPluginControl()
         {
@@ -125,7 +128,42 @@ namespace DynCrmExp.Deduplicator
                 // make sure checkbox is saved
                 dgvFields.CurrentCell = null;
 
-                ExecuteMethod(LoadData, entity);
+                var matchAttributes = dgvFields.Rows.Cast<DataGridViewRow>()
+                    .Where(r => (bool)(r.Cells["colMatch"] as DataGridViewCheckBoxCell).Value)
+                    .Select(r => r.Cells["colLogicalName"].Value.ToString());
+
+                var viewAttritues = dgvFields.Rows.Cast<DataGridViewRow>()
+                    .Where(r => (bool)(r.Cells["colView"] as DataGridViewCheckBoxCell).Value)
+                    .Select(r => r.Cells["colLogicalName"].Value.ToString());
+
+                // check at least one column is cheked to match, and view
+                if (matchAttributes.Count() == 0 || viewAttritues.Count() == 0)
+                {
+                    MessageBox.Show("Please select at least one field to match and view", "Select Fields", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                
+                // add duplicated view columns
+                AddViewColumns(dgvDuplicated, matchAttributes);
+                dgvDuplicated.Columns.Add("count", "Duplicates Count");
+                dgvDuplicated.Columns.Add("key", "Key");
+                dgvDuplicated.Columns["key"].Visible = false;
+
+                // add duplicates view columns
+                AddViewColumns(dgvDuplicates, viewAttritues);
+                dgvDuplicates.Columns.Add(new DataGridViewLinkColumn()
+                {
+                    Name = "url",
+                    HeaderText = "Record URL",
+                    Text = "Link",
+                    UseColumnTextForLinkValue = true
+                });
+                dgvDuplicates.Columns.Add("hiddenurl", "hiddenurl");
+                dgvDuplicates.Columns["hiddenurl"].Visible = false;
+
+                var config = new DuplicationConfiguration(entity, _attributes, matchAttributes, viewAttritues);
+
+                ExecuteMethod(LoadData, config);
             }
         }
 
@@ -138,17 +176,21 @@ namespace DynCrmExp.Deduplicator
                 var matchingKey = selectedRow.Cells["key"].Value != null ? selectedRow.Cells["key"].Value.ToString() : string.Empty;
                 if (!string.IsNullOrEmpty(matchingKey))
                 {
-                    var duplicates = _duplicated[matchingKey];
+                    var duplicates = _dataProcessor.GetDuplicates(matchingKey);
                     foreach (var item in duplicates)
                     {
+                        var entity = item as IDictionary<string, object>;
                         var rowIndex = dgvDuplicates.Rows.Add();
                         var row = dgvDuplicates.Rows[rowIndex];
                         foreach (DataGridViewColumn col in dgvDuplicates.Columns)
                         {
                             var attr = col.Name;
-                            row.Cells[attr].Value = GetAttributeDisplayValue(item, attr);
+                            if (entity.ContainsKey(attr))
+                            {
+                                row.Cells[attr].Value = entity[attr];
+                            }
                         }
-                        var url = CrmHelper.BuildRecordUrl(this.ConnectionDetail.WebApplicationUrl, _entities[item.LogicalName].ObjectTypeCode.Value, item.Id);
+                        var url = CrmHelper.BuildRecordUrl(this.ConnectionDetail.WebApplicationUrl, _entities[_dataProcessor.Config.TargetEntity].ObjectTypeCode.Value, (Guid)entity["Id"]);
                         row.Cells["hiddenurl"].Value = url;
                     }
                 }
@@ -172,6 +214,52 @@ namespace DynCrmExp.Deduplicator
                     }                    
                 }
             }
+        }
+
+        private void tsbExport_Click(object sender, EventArgs e)
+        {
+            if (_dataProcessor == null)
+                return;
+
+            var folderPath = string.Empty;
+            using (var fbd = new FolderBrowserDialog())
+            {
+                DialogResult result = fbd.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    folderPath = fbd.SelectedPath;
+                }
+            }
+
+            if (string.IsNullOrEmpty(folderPath))
+                return;
+            
+            var filePath = Path.Combine(folderPath, _dataProcessor.Config.TargetEntity + ".csv");
+
+            WorkAsync(new WorkAsyncInfo
+            {
+                Message = string.Format($"Exporting data..."),
+                Work = (worker, args) =>
+                {
+
+                    var results = _dataProcessor.GetExportData() as IEnumerable<dynamic>;
+                    using (var writer = new StreamWriter(filePath))
+                    using (var csv = new CsvWriter(writer))
+                    {
+                        csv.WriteRecords(results.ToList());
+                    }
+                },
+                PostWorkCallBack = (args) =>
+                {
+                    if (args.Error != null)
+                    {
+                        MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                    MessageBox.Show("Export completed!", "Export Data", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            });
         }
         #endregion
 
@@ -326,53 +414,15 @@ namespace DynCrmExp.Deduplicator
             cell.ReadOnly = true;
         }
 
-        private void LoadData(string entity)
+        private void LoadData(DuplicationConfiguration config)
         {
-            var matchAttributes = dgvFields.Rows.Cast<DataGridViewRow>()
-                .Where(r => (bool)(r.Cells["colMatch"] as DataGridViewCheckBoxCell).Value)
-                .Select(r => r.Cells["colLogicalName"].Value.ToString());
-
-            var viewAttritues = dgvFields.Rows.Cast<DataGridViewRow>()
-                .Where(r => (bool)(r.Cells["colView"] as DataGridViewCheckBoxCell).Value)
-                .Select(r => r.Cells["colLogicalName"].Value.ToString());
-
-            //TODO: check at least one column is cheked to match, and view
-            if(matchAttributes.Count() == 0 || viewAttritues.Count() ==0)
-            {
-                MessageBox.Show("Please select at least one field to match and view", "Select Fields", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            // add duplicated view columns
-            AddViewColumns(dgvDuplicated, matchAttributes);
-            dgvDuplicated.Columns.Add("count", "Duplicates Count");
-            dgvDuplicated.Columns.Add("key", "Key");
-            dgvDuplicated.Columns["key"].Visible = false;
-
-            // add duplicates view columns
-            AddViewColumns(dgvDuplicates, viewAttritues);
-            dgvDuplicates.Columns.Add(new DataGridViewLinkColumn()
-            {
-                Name = "url",
-                HeaderText = "Record URL",
-                Text = "Link",
-                UseColumnTextForLinkValue = true
-            });
-            dgvDuplicates.Columns.Add("hiddenurl", "hiddenurl");
-            dgvDuplicates.Columns["hiddenurl"].Visible = false;
-
-            // get selected attributes
-            var attributes = new List<string>(matchAttributes.Count() + viewAttritues.Count());
-            attributes.AddRange(matchAttributes);
-            attributes.AddRange(viewAttritues);
-            attributes = attributes.Distinct().ToList();
-
+            _dataProcessor = new DataProcessor(config);
             WorkAsync(new WorkAsyncInfo
             {
                 Message = string.Format($"Loading data..."),
                 Work = (worker, args) =>
                 {
-                    args.Result = CrmHelper.GetAllData(Service, entity, attributes, matchAttributes, chkIgnoreBlank.Checked);
+                    args.Result = _dataProcessor.GetDuplicationGroups(Service);
                 },
                 PostWorkCallBack = (args) =>
                 {
@@ -381,14 +431,33 @@ namespace DynCrmExp.Deduplicator
                         MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
-                    var result = args.Result as IEnumerable<Entity>;
+                    var result = args.Result as IEnumerable<DuplicatedDataModel>;
                     if (result != null)
-                    {
-                        EntityMetadata metadata = null;
-                        if (_entities.TryGetValue(entity, out metadata))
+                    {                                                
+                        if (!result.Any())
                         {
-                            FindDuplicated(result, matchAttributes);
+                            gbDuplicated.Text = string.Format($"Duplicated Records");
+                            MessageBox.Show("No duplicates found.", "Process completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
+                        else
+                        {
+                            gbDuplicated.Text = string.Format($"Duplicated Records ({result.Count()})");
+                            foreach (var item in result)
+                            {
+                                var rowIndex = dgvDuplicated.Rows.Add();
+                                var row = dgvDuplicated.Rows[rowIndex];
+                                foreach (var attr in config.MatchAttributes)
+                                {
+                                    row.Cells[attr].Value = item.DuplicatedData[attr];
+                                }
+                                row.Cells["count"].Value = item.DuplicatesCount;
+                                row.Cells["key"].Value = item.MatchingKey;
+                            }
+
+                            dgvDuplicated.ClearSelection();
+                        }
+                        dgvDuplicates.Rows.Clear();
+                        dgvDuplicates.Refresh();
                     }                    
                 }
             });
@@ -401,142 +470,12 @@ namespace DynCrmExp.Deduplicator
             {
                 grid.Columns.Add(attr, GetAttributeDisplayName(_attributes[attr]));
             }
-        }
-
-        private void FindDuplicated(IEnumerable<Entity> data, IEnumerable<string> matchAttibutes)
-        {
-            Func<Entity, IEnumerable<string>, string> groupingFunction = BuildMatchingKey;
-            _duplicated = data.ToLookup(e => groupingFunction(e, matchAttibutes));
-            
-            // build duplicated list
-            var duplicated = _duplicated.Where(g => g.Count() > 1)
-                .Select(g => new DuplicatedDataModel {
-                    MatchingKey = g.Key,
-                    DuplicatedData = g.FirstOrDefault(),
-                    DuplicatesCount = g.Count()
-                });
-            foreach (var item in duplicated)
-            {
-                var rowIndex = dgvDuplicated.Rows.Add();
-                var row = dgvDuplicated.Rows[rowIndex];
-                foreach (var attr in matchAttibutes)
-                {
-                    row.Cells[attr].Value = GetAttributeDisplayValue(item.DuplicatedData, attr);
-                }
-                row.Cells["count"].Value = item.DuplicatesCount;
-                row.Cells["key"].Value = item.MatchingKey;
-            }
-
-            dgvDuplicated.ClearSelection();
-            dgvDuplicates.Rows.Clear();
-            dgvDuplicates.Refresh();
-
-            if (duplicated.Count() == 0)
-            {
-                gbDuplicated.Text = string.Format($"Duplicated Records");
-                MessageBox.Show("No duplicates found.", "Process completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                gbDuplicated.Text = string.Format($"Duplicated Records ({duplicated.Count()})");
-            }
-        }
-
-        private string BuildMatchingKey(Entity entity, IEnumerable<string> groupAttributes)
-        {
-            var sb = new StringBuilder();
-            var keyString = string.Empty;
-            sb.Clear();
-            foreach (var attr in groupAttributes)
-            {
-                var stringvalue = GetAttributeStringValue(entity, attr);
-                if (!chkCaseSensitive.Checked)
-                {
-                    stringvalue = stringvalue.ToLower();
-                }
-
-                if (chkIgnoreWhiteSpace.Checked)
-                {
-                    stringvalue = stringvalue.Trim();
-                }
-
-                if (chkIgnoreBlank.Checked && string.IsNullOrEmpty(stringvalue))
-                {
-                    continue;
-                }
-
-                sb.Append(stringvalue);
-                sb.Append("_");
-            }
-            keyString = sb.ToString();
-            return keyString;
-        }
-
-        private string GetAttributeStringValue(Entity entity, string attribute)
-        {
-            var result = string.Empty;
-            if (entity.Contains(attribute) && entity[attribute] != null)
-            {
-                var attrType = _attributes[attribute].AttributeType;
-                if (attrType == AttributeTypeCode.Lookup ||
-                    attrType == AttributeTypeCode.Customer ||
-                    attrType == AttributeTypeCode.Owner)
-                {
-                    var val = (EntityReference)entity[attribute];
-                    result = val.Id.ToString().ToLower();
-                }
-                else if (attrType == AttributeTypeCode.Boolean)
-                {
-                    var val = (bool)entity[attribute];
-                    result = val.ToString().ToLower();
-                }
-                else if (attrType == AttributeTypeCode.Uniqueidentifier)
-                {
-                    var val = (Guid)entity[attribute];
-                    result = val.ToString().ToLower();
-                }
-                else if (attrType == AttributeTypeCode.Picklist ||
-                    attrType == AttributeTypeCode.State ||
-                    attrType == AttributeTypeCode.Status)
-                {
-                    var val = (OptionSetValue)entity[attribute];
-                    result = val.Value.ToString().ToLower();
-                }
-                else if(entity.FormattedValues.Contains(attribute))
-                {
-                    result = entity.FormattedValues[attribute];                    
-                }
-                else
-                {
-                    result = entity[attribute].ToString();
-                }
-            }
-            return result;
-        }
-
-        private string GetAttributeDisplayValue(Entity entity, string attribute)
-        {
-            var result = string.Empty;
-            if (entity.Contains(attribute) && entity[attribute] != null)
-            {
-                var attrType = _attributes[attribute].AttributeType;
-                if (entity.FormattedValues.Contains(attribute))
-                {
-                    result = entity.FormattedValues[attribute];
-                }
-                else
-                {
-                    result = entity[attribute].ToString();
-                }
-            }
-            return result;
-        }
+        }               
 
         private void ClearForm()
         {
             _entities = null;
-            _attributes = null;
-            _duplicated = null;
+            _attributes = null;            
 
             cbEntities.DataSource = null;
             cbEntities.DisplayMember = "DisplayName";
@@ -547,6 +486,8 @@ namespace DynCrmExp.Deduplicator
 
         private void ClearResults()
         {
+            _dataProcessor = null;
+
             dgvFields.Rows.Clear();
             dgvFields.Refresh();
 
@@ -560,8 +501,7 @@ namespace DynCrmExp.Deduplicator
             gbDuplicated.Text = string.Format($"Duplicated Records");
         }
 
-        #endregion
 
-        
+        #endregion
     }
 }
