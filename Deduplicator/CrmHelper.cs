@@ -153,9 +153,11 @@ namespace DynCrmExp.Deduplicator
         }
 
         public static string BuildRecordUrl(string orgUrl, int entityCode, Guid recordId)
-        {                        
-            string recordUrl = $"{orgUrl}main.aspx?etc={entityCode}&id=%7b{recordId}%7d&pagetype=entityrecord";            
-            return recordUrl;
+        {
+            var uriBuilder = new UriBuilder(orgUrl);
+            string recordPath = string.Format($"main.aspx?etc={entityCode}&id=%7b{recordId}%7d&pagetype=entityrecord");
+            uriBuilder.Path = recordPath;
+            return uriBuilder.ToString();
         }
     }
 }
