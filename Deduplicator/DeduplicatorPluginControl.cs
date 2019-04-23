@@ -423,7 +423,7 @@ namespace DynCrmExp.Deduplicator
                 {
                     row.Cells[attr].Value = GetAttributeDisplayValue(item.DuplicatedData, attr);
                 }
-                row.Cells["count"].Value = item.DuplicatesCount.ToString();
+                row.Cells["count"].Value = item.DuplicatesCount;
                 row.Cells["key"].Value = item.MatchingKey;
             }
 
