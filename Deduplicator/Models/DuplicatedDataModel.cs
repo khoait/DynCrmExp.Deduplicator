@@ -10,7 +10,7 @@ namespace DynCrmExp.Deduplicator.Models
     public class DuplicatedDataModel
     {
         public string MatchingKey { get; set; }
-        public Entity DuplicatedData { get; set; }
+        public IDictionary<string, object> DuplicatedData { get; set; }
         public int DuplicatesCount { get; set; }
     }
 }
