@@ -19,6 +19,7 @@ using XrmToolBox.Extensibility.Interfaces;
 using CsvHelper;
 using System.IO;
 using CsvHelper.Configuration;
+using System.Globalization;
 
 namespace DynCrmExp.Deduplicator
 {
@@ -114,14 +115,18 @@ namespace DynCrmExp.Deduplicator
         {            
             var entity = (string)cbEntities.SelectedValue;
             if (!string.IsNullOrEmpty(entity))
-            {
+            {                
                 ClearResults();
+
+                dgvFields.Rows.Clear();
+                dgvFields.Refresh();
                 ExecuteMethod(LoadFields, entity);
             }            
         }
 
         private void tsbRun_Click(object sender, EventArgs e)
         {
+            ClearResults();
             var entity = (string)cbEntities.SelectedValue;
             if (!string.IsNullOrEmpty(entity))
             {
@@ -146,6 +151,8 @@ namespace DynCrmExp.Deduplicator
                 // add duplicated view columns
                 AddViewColumns(dgvDuplicated, matchAttributes);
                 dgvDuplicated.Columns.Add("count", "Duplicates Count");
+                dgvDuplicated.Columns["count"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
                 dgvDuplicated.Columns.Add("key", "Key");
                 dgvDuplicated.Columns["key"].Visible = false;
 
@@ -162,6 +169,9 @@ namespace DynCrmExp.Deduplicator
                 dgvDuplicates.Columns["hiddenurl"].Visible = false;
 
                 var config = new DuplicationConfiguration(entity, _attributes, matchAttributes, viewAttritues);
+                config.IsCaseSensitive = chkCaseSensitive.Checked;
+                config.ShouldIgnoreWhiteSpace = chkIgnoreWhiteSpace.Checked;
+                config.ShouldIgnoreBlank = chkIgnoreBlank.Checked;
 
                 ExecuteMethod(LoadData, config);
             }
@@ -170,7 +180,7 @@ namespace DynCrmExp.Deduplicator
         private void dgvDuplicated_SelectionChanged(object sender, EventArgs e)
         {
             dgvDuplicates.Rows.Clear();
-            if (dgvDuplicated.CurrentRow != null)
+            if (dgvDuplicated.CurrentRow != null && dgvDuplicated.SelectedRows.Count == 1)
             {
                 var selectedRow = dgvDuplicated.CurrentRow;
                 var matchingKey = selectedRow.Cells["key"].Value != null ? selectedRow.Cells["key"].Value.ToString() : string.Empty;
@@ -245,7 +255,7 @@ namespace DynCrmExp.Deduplicator
 
                     var results = _dataProcessor.GetExportData() as IEnumerable<dynamic>;
                     using (var writer = new StreamWriter(filePath))
-                    using (var csv = new CsvWriter(writer))
+                    using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                     {
                         csv.WriteRecords(results.ToList());
                     }
@@ -366,7 +376,7 @@ namespace DynCrmExp.Deduplicator
 
                                 _attributes = entMetadata.Attributes.ToDictionary(m => m.LogicalName);
 
-                                var attritbutes = entMetadata.Attributes.Select(a => new AttributeMetadataModel()
+                                var attributes = entMetadata.Attributes.Select(a => new AttributeMetadataModel()
                                 {
                                     DisplayName = GetAttributeDisplayName(a),
                                     LogicalName = a.LogicalName,
@@ -376,7 +386,7 @@ namespace DynCrmExp.Deduplicator
                                 .ThenBy(a => a.LogicalName).ToList();                                
 
                                 // use unbound grid to support column sorting
-                                foreach (var item in attritbutes)
+                                foreach (var item in attributes)
                                 {
                                     var rowIndex = dgvFields.Rows.Add(item.DisplayName, item.LogicalName, item.IsMatch, item.IsView);
                                     // disable matching on primary id column
@@ -479,17 +489,17 @@ namespace DynCrmExp.Deduplicator
 
             cbEntities.DataSource = null;
             cbEntities.DisplayMember = "DisplayName";
-            cbEntities.ValueMember = "LogicalName";            
+            cbEntities.ValueMember = "LogicalName";
+
+            dgvFields.Rows.Clear();
+            dgvFields.Refresh();
 
             ClearResults();
         }
 
         private void ClearResults()
         {
-            _dataProcessor = null;
-
-            dgvFields.Rows.Clear();
-            dgvFields.Refresh();
+            _dataProcessor = null;            
 
             dgvDuplicated.Columns.Clear();
             dgvDuplicated.Refresh();
