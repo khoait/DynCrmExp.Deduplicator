@@ -91,24 +91,24 @@ namespace DynCrmExp.Deduplicator
                     attrType == AttributeTypeCode.Customer ||
                     attrType == AttributeTypeCode.Owner)
                 {
-                    var val = (EntityReference)entity[attribute];
+                    var val = entity.GetAttributeValue<EntityReference>(attribute);
                     result = val.Id.ToString().ToLower();
                 }
                 else if (attrType == AttributeTypeCode.Boolean)
                 {
-                    var val = (bool)entity[attribute];
+                    var val = entity.GetAttributeValue<bool>(attribute);
                     result = val.ToString().ToLower();
                 }
                 else if (attrType == AttributeTypeCode.Uniqueidentifier)
                 {
-                    var val = (Guid)entity[attribute];
+                    var val = entity.GetAttributeValue<Guid>(attribute);
                     result = val.ToString().ToLower();
                 }
                 else if (attrType == AttributeTypeCode.Picklist ||
                     attrType == AttributeTypeCode.State ||
                     attrType == AttributeTypeCode.Status)
                 {
-                    var val = (OptionSetValue)entity[attribute];
+                    var val = entity.GetAttributeValue<OptionSetValue>(attribute);
                     result = val.Value.ToString().ToLower();
                 }
                 else if (entity.FormattedValues.Contains(attribute))
@@ -117,7 +117,20 @@ namespace DynCrmExp.Deduplicator
                 }
                 else
                 {
-                    result = entity[attribute].ToString();
+                    // double check value type, just in case
+                    var val = entity[attribute];
+                    if(val is EntityReference)
+                    {
+                        result = ((EntityReference)val).Id.ToString();
+                    }
+                    else if(val is OptionSetValue)
+                    {
+                        result = ((OptionSetValue)val).Value.ToString();
+                    }
+                    else
+                    {
+                        result = val.ToString();
+                    }
                 }
             }
             return result;
@@ -134,7 +147,57 @@ namespace DynCrmExp.Deduplicator
                 }
                 else
                 {
-                    result = entity[attribute].ToString();
+                    //result = entity[attribute].ToString();
+                    var attrType = Config.AttributesMeta[attribute].AttributeType.Value;
+                    if (attrType == AttributeTypeCode.Lookup ||
+                        attrType == AttributeTypeCode.Customer ||
+                        attrType == AttributeTypeCode.Owner)
+                    {
+                        var val = entity.GetAttributeValue<EntityReference>(attribute);
+                        result = val.Name.ToString();
+                        if (string.IsNullOrEmpty(result))
+                        {
+                            result = val.Id.ToString();
+                        }
+                    }
+                    else if (attrType == AttributeTypeCode.Boolean)
+                    {
+                        var val = entity.GetAttributeValue<bool>(attribute);
+                        result = val.ToString().ToLower();
+                    }
+                    else if (attrType == AttributeTypeCode.Uniqueidentifier)
+                    {
+                        var val = entity.GetAttributeValue<Guid>(attribute);
+                        result = val.ToString().ToLower();
+                    }
+                    else if (attrType == AttributeTypeCode.Picklist ||
+                        attrType == AttributeTypeCode.State ||
+                        attrType == AttributeTypeCode.Status)
+                    {
+                        var val = entity.GetAttributeValue<OptionSetValue>(attribute);
+                        result = val.Value.ToString().ToLower();
+                    }                    
+                    else
+                    {
+                        // double check value type, just in case
+                        var val = entity[attribute];
+                        if (val is EntityReference)
+                        {
+                            result = ((EntityReference)val).Name.ToString();
+                            if (string.IsNullOrEmpty(result))
+                            {
+                                result = ((EntityReference)val).Id.ToString();
+                            }
+                        }
+                        else if (val is OptionSetValue)
+                        {
+                            result = ((OptionSetValue)val).Value.ToString();
+                        }
+                        else
+                        {
+                            result = val.ToString();
+                        }
+                    }
                 }
             }
             return result;
