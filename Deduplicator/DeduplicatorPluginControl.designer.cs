@@ -119,8 +119,8 @@
             this.tsbRun.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.tsbRun.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbRun.Name = "tsbRun";
-            this.tsbRun.Size = new System.Drawing.Size(107, 22);
-            this.tsbRun.Text = "Find duplicates";
+            this.tsbRun.Size = new System.Drawing.Size(108, 22);
+            this.tsbRun.Text = "Find Duplicates";
             this.tsbRun.Click += new System.EventHandler(this.tsbRun_Click);
             // 
             // tsbExport
@@ -329,7 +329,7 @@
             this.gbDuplicated.Size = new System.Drawing.Size(521, 184);
             this.gbDuplicated.TabIndex = 0;
             this.gbDuplicated.TabStop = false;
-            this.gbDuplicated.Text = "Duplicated Records";
+            this.gbDuplicated.Text = "Duplicated Groups";
             // 
             // dgvDuplicated
             // 

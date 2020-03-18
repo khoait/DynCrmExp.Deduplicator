@@ -446,12 +446,12 @@ namespace DynCrmExp.Deduplicator
                     {                                                
                         if (!result.Any())
                         {
-                            gbDuplicated.Text = string.Format($"Duplicated Records");
+                            gbDuplicated.Text = string.Format($"Duplicated Groups");
                             MessageBox.Show("No duplicates found.", "Process completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                         {
-                            gbDuplicated.Text = string.Format($"Duplicated Records ({result.Count()})");
+                            gbDuplicated.Text = string.Format($"Duplicated Groups ({result.Count()})");
                             foreach (var item in result)
                             {
                                 var rowIndex = dgvDuplicated.Rows.Add();
@@ -508,7 +508,7 @@ namespace DynCrmExp.Deduplicator
             dgvDuplicates.Rows.Clear();
             dgvDuplicates.Refresh();
 
-            gbDuplicated.Text = string.Format($"Duplicated Records");
+            gbDuplicated.Text = string.Format($"Duplicated Groups");
         }
 
 
